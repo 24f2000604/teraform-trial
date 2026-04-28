@@ -1,6 +1,6 @@
-resource "aws_security_group" "alb" {
+resource "aws_security_group" "sg" {
   name        = "${var.project_name}-alb-sg"
-  description = "ALB security group"
+  description = "alb sg"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -22,18 +22,18 @@ resource "aws_security_group" "alb" {
   })
 }
 
-resource "aws_lb" "this" {
+resource "aws_lb" "lb" {
   name              = substr(replace("${var.project_name}-alb", "_", "-"), 0, 32)
   load_balancer_type = "application"
   subnets           = var.public_subnet_ids
-  security_groups   = [aws_security_group.alb.id]
+  security_groups   = [aws_security_group.sg.id]
 
   tags = merge(var.common_tags, {
     Name = "${var.project_name}-alb"
   })
 }
 
-resource "aws_lb_target_group" "this" {
+resource "aws_lb_target_group" "tg" {
   name        = substr(replace("${var.project_name}-tg", "_", "-"), 0, 32)
   port        = 80
   protocol    = "HTTP"
@@ -51,13 +51,13 @@ resource "aws_lb_target_group" "this" {
   }
 }
 
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
+resource "aws_lb_listener" "lis" {
+  load_balancer_arn = aws_lb.lb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.tg.arn
   }
 }

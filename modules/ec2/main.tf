@@ -1,6 +1,6 @@
-resource "aws_security_group" "ec2" {
+resource "aws_security_group" "sg" {
   name        = "${var.project_name}-ec2-sg"
-  description = "EC2 security group"
+  description = "EC2 sg"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -22,31 +22,22 @@ resource "aws_security_group" "ec2" {
   })
 }
 
-locals {
-  user_data = <<-EOF
-              #!/bin/bash
-              set -eux
-              if command -v dnf >/dev/null 2>&1; then
-                dnf install -y nginx
-                systemctl enable nginx
-                systemctl start nginx
-              else
-                yum install -y nginx
-                systemctl enable nginx
-                systemctl start nginx
-              fi
-              echo "<html><body><h1>${var.project_name}</h1></body></html>" > /usr/share/nginx/html/index.html
-              EOF
-}
-
-resource "aws_launch_template" "this" {
+resource "aws_launch_template" "lt" {
   name_prefix   = "${var.project_name}-lt-"
   image_id      = var.ami_id
   instance_type = var.instance_type
 
-  vpc_security_group_ids = [aws_security_group.ec2.id]
+  vpc_security_group_ids = [aws_security_group.sg.id]
 
-  user_data = base64encode(local.user_data)
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    apt-get update -y
+    apt-get install -y nginx
+    systemctl enable nginx
+    systemctl restart nginx
+    echo "<html><body><h1>${var.project_name}</h1></body></html>" > /usr/share/nginx/html/index.html
+  EOF
+  )
 
   tag_specifications {
     resource_type = "instance"
@@ -57,7 +48,7 @@ resource "aws_launch_template" "this" {
   }
 }
 
-resource "aws_autoscaling_group" "this" {
+resource "aws_autoscaling_group" "asg" {
   name                = "${var.project_name}-asg"
   desired_capacity    = var.desired_capacity
   min_size            = var.min_size
@@ -66,7 +57,7 @@ resource "aws_autoscaling_group" "this" {
   target_group_arns   = [var.target_group_arn]
 
   launch_template {
-    id      = aws_launch_template.this.id
+    id      = aws_launch_template.lt.id
     version = "$Latest"
   }
 

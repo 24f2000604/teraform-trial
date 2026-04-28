@@ -16,12 +16,12 @@ provider "aws" {
 module "vpc" {
   source = "./modules/vpc"
 
-  project_name        = var.project_name
-  vpc_cidr            = var.vpc_cidr
-  public_subnet_cidrs = var.public_subnet_cidrs
+  project_name         = var.project_name
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
-  availability_zones  = var.availability_zones
-  common_tags         = var.common_tags
+  availability_zones   = var.availability_zones
+  common_tags          = var.common_tags
 }
 
 module "alb" {
@@ -36,15 +36,15 @@ module "alb" {
 module "ec2" {
   source = "./modules/ec2"
 
-  project_name          = var.project_name
-  vpc_id                = module.vpc.vpc_id
-  private_subnet_ids    = module.vpc.private_subnet_ids
-  alb_security_group_id  = module.alb.security_group_id
-  target_group_arn      = module.alb.target_group_arn
-  instance_type         = var.instance_type
-  ami_id                = var.ami_id
-  desired_capacity      = var.desired_capacity
-  min_size              = var.min_size
-  max_size              = var.max_size
-  common_tags           = var.common_tags
+  project_name         = var.project_name
+  vpc_id               = module.vpc.vpc_id
+  private_subnet_ids   = module.vpc.private_subnet_ids
+  alb_security_group_id = module.alb.security_group_id
+  target_group_arn     = module.alb.target_group_arn
+  instance_type        = var.instance_type
+  ami_id               = var.ami_id
+  desired_capacity     = var.desired_capacity
+  min_size             = var.min_size
+  max_size             = var.max_size
+  common_tags          = var.common_tags
 }
